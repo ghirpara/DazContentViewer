@@ -22,7 +22,7 @@ class MixImage(QLabel):
     def __init__(self, path):
         QLabel.__init__(self)
         self.pixmap = QPixmap(path)
-        self.setPixmap(self.pixmap.scaled(QSize(512, 512), Qt.KeepAspectRatio))
+        self.setPixmap(self.pixmap.scaled(QSize(256, 256), Qt.KeepAspectRatio))
         self.id = MixImage.id_counter
 
         MixImage.id_counter +=1
@@ -71,6 +71,47 @@ class ImageData:
                 break
         return rv
 
+class CommandPanel(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.layout = QVBoxLayout()
+
+        self.preload_button = QPushButton("Preload")
+        self.load_button = QPushButton("Load")
+        self.index_button = QPushButton("Index")
+        self.query_button = QPushButton("Query")
+        self.quit_button = QPushButton("Quit")
+
+        
+        self.quit_button.clicked.connect(self.safe_quit)      
+
+        self.layout.addWidget(self.preload_button)
+        self.layout.addWidget(self.load_button)
+        self.layout.addWidget(self.index_button)
+        self.layout.addWidget(self.query_button)
+        self.layout.addWidget(self.quit_button)
+        
+        self.setLayout(self.layout)
+
+    def safe_quit(self):
+        sys.exit(0)
+        
+class DetailPanel(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.layout = QVBoxLayout()
+        
+        self.biglabel1 = QLabel ("1x  THIS IS A PLACEHOLDER")
+        self.biglabel2 = QLabel ("2x  THIS IS A PLACEHOLDER")
+        self.biglabel3 = QLabel ("3x  THIS IS A PLACEHOLDER")
+
+        self.layout.addWidget(self.biglabel1)
+        self.layout.addWidget(self.biglabel2)
+        self.layout.addWidget(self.biglabel3)
+
+        self.setLayout(self.layout)
+
+
 class ImageGallery(QWidget):
     def __init__(self, images, parent=None):
         super().__init__(parent)
@@ -92,9 +133,6 @@ class ImageGallery(QWidget):
         self.filter_buttons = {}
         self.filter_apply_button = QPushButton("Apply Filter")
 
-        self.common_layout = QHBoxLayout()
-        self.quit_button = QPushButton("Quit")
-        self.common_layout.addWidget(self.quit_button)
 
         # Add filter widgets
         for i, attribute in enumerate(self.images[0].attributes):
@@ -114,26 +152,14 @@ class ImageGallery(QWidget):
         for button in self.filter_buttons.values():
             button.clicked.connect(self.update_filter)
 
-        self.quit_button.clicked.connect(self.safe_quit)
-
-        self.biglabel1 = QLabel ("1  THIS IS A PLACEHOLDER")
-        self.biglabel2 = QLabel ("2  THIS IS A PLACEHOLDER")
-        self.biglabel3 = QLabel ("3  THIS IS A PLACEHOLDER")
-
         left_panel_layout = QVBoxLayout()
         left_panel_layout.addWidget(self.scroll_area)
         left_panel_layout.addLayout(self.filter_layout)
-        left_panel_layout.addLayout(self.common_layout)
 
-        right_panel_layout = QVBoxLayout()
-        right_panel_layout.addWidget(self.biglabel1)
-        right_panel_layout.addWidget(self.biglabel2)
-        right_panel_layout.addWidget(self.biglabel3)
 
         # Create main layout
         main_layout = QGridLayout()
         main_layout.addLayout(left_panel_layout, 0, 0)
-        main_layout.addLayout(right_panel_layout, 0, 1)
         
         self.setLayout(main_layout)
 
@@ -173,26 +199,3 @@ class ImageGallery(QWidget):
         self.image_area.adjustSize()
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    catlist=["nature", "animals", "abstract", "cool", "machinery"]
-    collist=["red", "green", "blue", "indigo", "violet", "black", "white"]
-
-    images=[]
-    files=os.listdir("data")
-    n=0
-    for file in files:
-        img=ImageData(f"data/{file}",
-                     category=random.choice(catlist),
-                     color=random.choice(collist))
-        images.append(img)
-#        n=n+1
-#        if (n>256):
-#            break
-
-    gallery = ImageGallery(images)
-    gallery.setWindowTitle("Image Gallery")
-    gallery.show()
-
-    sys.exit(app.exec())
