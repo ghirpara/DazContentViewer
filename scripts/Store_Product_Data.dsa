@@ -1,0 +1,309 @@
+/**********************************************************************
+ 
+	This script is provided as part of the Daz Script Documentation. The
+	contents of this script, and\or any portion thereof, may only be used
+	in accordance with the following license:
+ 
+	Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+	- http://creativecommons.org/licenses/by/3.0
+ 
+	To contact Daz 3D or for more information about Daz Script visit the
+	Daz 3D website:
+ 
+	- http://www.daz3d.com
+ 
+**********************************************************************/
+// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/metadata/get_store_product_data/start
+
+// Define an anonymous function;
+// serves as our main loop,
+// limits the scope of variables
+(function(){
+	
+	/*********************************************************************/
+	// String : A function for retrieving a translation if one exists
+	function text( sText )
+	{
+		// If the version of the application supports qsTr()
+		if( typeof( qsTr ) != "undefined" ){
+			// Return the translated (if any) text
+			return qsTr( sText );
+		}
+ 		
+		// Return the original text
+		return sText;
+	};
+	
+	/*********************************************************************/
+	// Boolean : A function for determining if an object has a named member
+	function hasMember( oObject, sMember, sType )
+	{
+		// Return whether or not the object has a function with the name
+		return typeof( oObject[ sMember ] ) == sType;
+	};
+	
+	/*********************************************************************/
+	// Boolean : A function for determining if an object has a named function
+	function hasFunction( oObject, sFunction )
+	{
+		// Return whether or not the object has a function with the name
+		return hasMember( oObject, sFunction, "function" );
+	};
+	
+	/*********************************************************************/
+	// Object : A function for retrieving product data for a given SKU
+	function getProductDataFromStore( nIdx )
+	{
+		// Create a http helper object
+		var oHttp = new DzHttpHelper();
+		// Use a secure connection for the request
+		oHttp.setConnectionMode( "https" );
+		// Set the host for the request
+		oHttp.setHost( "www.daz3d.com" );
+		// Set the path for the request
+		oHttp.setPath( String("/dazApi/slab/%1").argInt( nIdx ) );
+		
+		// If the app version is older than 4.15.0.18
+		if( App.version64 < 0x0004000f00000012 ){
+			// Set the query string for the request to deal with
+			// an initialization issue in earlier builds
+			oHttp.setQueryString( "" );
+		}
+		
+		// Set the content type for the request
+		oHttp.setContentType( "application/json" );
+		// Set the method for the request
+		oHttp.setRequestMethod( "GET" );
+		
+		// Perform a syncronous request and capture the response
+		var bytesResponse = oHttp.doSynchronousRequest();
+		
+		// Get whether or not there were errors
+		var sError = oHttp.getError();
+		
+		// Declare working variable
+		var sResponse;
+		
+		// If there were no errors
+		if( sError === "" ){
+			// Convert the response to a string
+			sResponse = hasFunction( bytesResponse, "convertToString" ) ?
+				bytesResponse.convertToString() : String( bytesResponse );
+			// If the response is not empty
+			if( !sResponse.isEmpty() ){
+				// Return the data parsed into an Object
+				return JSON.parse( sResponse );
+			}
+		// If there is an error
+		} else {
+			// Log it
+			print( sError );
+		}
+		
+		// Return a "404" Object
+		return {
+			name: "404 - Not Found",
+			id: nIdx,
+			url: String( "/catalog/product/view/id/%1" ).argInt( nIdx )
+		};
+	};
+	
+	/*********************************************************************/
+	// String : A function for getting a product URL for a given SKU
+	function getProductUrl( nIdx, bFriendly )
+	{
+		// If we want the "friendly" URL
+		if( bFriendly ){
+			// Get the product data from the store
+			var oProductData = getProductDataFromStore( nIdx );
+			// Define the property that holds the data we want
+			var sProperty = "url";
+			// If the product data contains what we want
+			if( oProductData.hasOwnProperty( sProperty ) ){
+				// Return the URL
+				return String( "https://www.daz3d.com%1" ).arg( oProductData[ sProperty ] );
+			}
+		}
+		
+		// Return the raw product URL
+		return String( "https://www.daz3d.com/catalog/product/view/id/%1" ).argInt( nIdx );
+	};
+	
+	/*********************************************************************/
+	// String : A function for getting and displaying product info for a given SKU
+	function displayProductData( nIdx )
+	{
+		// Get the product data from the store
+		var oProductData = getProductDataFromStore( nIdx );
+		
+		// Create a basic dialog
+		var wDlg = new DzBasicDialog();
+	 	
+		// Get the wrapped widget for the dialog
+		var oDlgWgt = wDlg.getWidget();
+	 	
+		// Set the title of the dialog
+		wDlg.caption = "Product Data";
+	 	
+		// Strip the space for a settings key
+		var sKey = wDlg.caption.replace( / /g, "" ) + "Dlg";
+	 	
+		// Set an [unique] object name on the wrapped dialog widget;
+		// this is used for recording position and size separately
+		// from all other [uniquely named] DzBasicDialog instances
+		oDlgWgt.objectName = sKey;
+		
+		// Initialize an array to collect lines
+		var aLines = [];
+		
+		// Define the property that holds the data we want
+		var sProperty = "name";
+		// If the product data contains what we want
+		if( oProductData.hasOwnProperty( sProperty ) ){
+			// Append the information
+			aLines.push( String("<b>Name:</b> %1")
+					.arg( oProductData[ sProperty ] ) );
+		}
+		
+		// Define the property that holds the data we want
+		sProperty = "id";
+		// If the product data contains what we want
+		if( oProductData.hasOwnProperty( sProperty ) ){
+			// Append the information
+			aLines.push( String("<b>SKU:</b> %1")
+					.arg( oProductData[ sProperty ] ) );
+		}
+		
+		// Define the property that holds the data we want
+		sProperty = "url";
+		// If the product data contains what we want
+		if( oProductData.hasOwnProperty( sProperty ) ){
+			aLines.push( String("<b>URL:</b> " +
+				"<a href=\"https://www.daz3d.com%1\">https://www.daz3d.com%1</a>")
+					.arg( oProductData[ sProperty ] ) );
+		}
+		
+		// Define the property that holds the data we want
+		sProperty = "price";
+		// If the product data contains what we want
+		if( oProductData.hasOwnProperty( sProperty ) ){
+			// Append the information
+			aLines.push( String("<b>Price:</b> $%1")
+					.arg( oProductData[ sProperty ] ) );
+		}
+		
+		// Define the property that holds the data we want
+		sProperty = "dazOriginal";
+		// If the product data contains what we want
+		if( oProductData.hasOwnProperty( sProperty ) ){
+			// Append the information
+			aLines.push( String("<b>Daz Original:</b> %1")
+					.arg( oProductData[ sProperty ] ? "Yes" : "No" ) );
+		}
+		
+		// Define the property that holds the data we want
+		sProperty = "platClub";
+		// If the product data contains what we want
+		if( oProductData.hasOwnProperty( sProperty ) ){
+			// Append the information
+			aLines.push( String("<b>Platinum Club:</b> %1")
+					.arg( oProductData[ sProperty ] ? "Yes" : "No" ) );
+		}
+		
+		// Initialize working variables
+		var bBytesBase64 = false;
+		var bHasImage = false;
+		
+		// Define the property that holds the data we want
+		sProperty = "image";
+		// If the product data contains what we want
+		if( oProductData.hasOwnProperty( sProperty ) ){
+			// Get the base64 encoded image data
+			var bytesData = new ByteArray( oProductData[ sProperty ] );
+			
+			// If the API for handling Base64 data in a ByteArray exists
+			if( typeof( bytesData.fromBase64 ) != "undefined" ){
+				// Update our flag
+				bBytesBase64 = true;
+				
+				// Create a pixmap for the image
+				var pixProduct = new Pixmap();
+				
+				// Load the image data into the pixmap
+				pixProduct.loadFromData( bytesData.fromBase64( bytesData ), "JPG" );
+		 		
+				// Create a label and assign the pixmap
+				wLabel = new DzLabel( wDlg );
+				wLabel.pixmap = pixProduct;
+			 	
+				// Add the label to the dialog
+				wDlg.addWidget( wLabel );
+			// If the API for handling Base64 data in a ByteArray does not exist
+			} else {
+				// Prepend a base64 encoded html image resource
+				aLines.unshift( String("<img src=\"data:image/jpg;base64,%1\">" )
+							.arg( oProductData[ sProperty ] ) );
+				// Update our flag
+				bHasImage = true;
+			}
+		}
+		
+		// If we had any of the data we were looking for
+		if( aLines.length > 0 ){
+			// Create a text browser
+			var wBrowser = new DzTextBrowser( wDlg );
+			// Set the text interaction flags
+			wBrowser.textInteractionFlags = DzWidget.TextBrowserInteraction;
+			// We want to ba able to click hyperlinks
+			wBrowser.openExternalLinks = true;
+			
+			// Define the height of a line
+			var nLineHeight = 18;
+			
+			// If we do not have the Base64 support on ByteArray
+			if( !bBytesBase64 && bHasImage ){
+				// Set the html contents
+				wBrowser.html = String("<html><body>%1<ul><li>%2</li></ul></body></html>")
+							.arg( aLines.shift() )
+							.arg( aLines.join( "</li><li>" ) );
+				// Set the minimum height of the widget
+				wBrowser.minHeight = 494 + (wBrowser.lineCount * nLineHeight);
+			// If we do have the Base64 support on ByteArray
+			} else {
+				// Set the html contents
+				wBrowser.html = String("<html><body><ul><li>%1</li></ul></body></html>")
+							.arg( aLines.join( "</li><li>" ) );
+				
+				// Set the minimum height of the widget
+				wBrowser.minHeight = wBrowser.lineCount * nLineHeight;
+			}
+			
+			// Set the minimum width of the widget
+			wBrowser.minWidth = 380;
+			
+			// Add the widget to the dialog
+			wDlg.addWidget( wBrowser );
+		}
+		
+		// Get the minimum size of the dialog
+		var sizeHint = oDlgWgt.minimumSizeHint;
+	 	
+		// Set the fixed size of the dialog
+		wDlg.setFixedSize( sizeHint.width, sizeHint.height );
+	 	
+		// Set the text on the accept button
+		wDlg.setAcceptButtonText( text( "&Close" ) );
+		// Hide the cancel button
+		wDlg.showCancelButton( false );
+	 	
+		// Display the dialog
+		wDlg.exec();
+	};
+	
+	/*********************************************************************/
+	//print( getProductUrl( 43679, false ) );
+	print( JSON.stringify( getProductDataFromStore( 43679 ), null, "\t" ) );
+	//displayProductData( 43679 );
+	
+// Finalize the function and invoke
+})();

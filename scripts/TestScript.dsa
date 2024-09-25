@@ -1,0 +1,44 @@
+/**********************************************************************
+ 
+	This script is provided as part of the Daz Script Documentation. The
+	contents of this script, and\or any portion thereof, may only be used
+	in accordance with the following license:
+ 
+	Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+	- http://creativecommons.org/licenses/by/3.0
+ 
+	To contact Daz 3D or for more information about Daz Script visit the
+	Daz 3D website:
+ 
+	- http://www.daz3d.com
+ 
+**********************************************************************/
+// Source: http://docs.daz3d.com/doku.php/public/software/dazstudio/4/referenceguide/scripting/api_reference/samples/metadata/list_products/start
+
+// Define an anonymous function;
+// serves as our main loop,
+// limits the scope of variables
+
+includeDir_oFILE = new DzFile( getScriptFileName() );
+include( includeDir_oFILE.path()+'/Utility.dsa');
+
+
+(function(){
+	
+	App.verbose("+++++++++++++++++++++ Test Start ++++++++++++++++++++++++++++");
+
+	App.verbose("++++++ Received " + App.scriptArgs.length + " arguments.");
+	for (var n = 0; n < App.scriptArgs.length; n++) {
+		App.verbose("+++++ Arg " + n + " = " + App.scriptArgs[n]);
+	}
+
+	initArgMap();
+	App.verbose("++++ Arg Map = " + JSON.stringify(o_arg_map));
+
+	App.verbose("++++ Printing unspecified args 'bozo' = [" + getMappedArg('bozo') + "]");
+
+	App.verbose("++++ Printing unspecified args 'gonzo' with default = [" + getMappedArg('gonzo', 'A Default Value') + "]");
+
+
+// Finalize the function and invoke
+})();
