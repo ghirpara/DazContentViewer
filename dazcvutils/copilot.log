@@ -1,8 +1,0 @@
-DEBUG:global:This is a debug message
-INFO:global:This is an info message
-WARNING:global:This is a warning message
-ERROR:global:This is an error message
-CRITICAL:global:This is a critical message
-DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): www.daz3d.com:443
-DEBUG:urllib3.connectionpool:https://www.daz3d.com:443 "GET /dazApi/slab//81555 HTTP/11" 301 None
-DEBUG:urllib3.connectionpool:https://www.daz3d.com:443 "GET /dazApi/slab/81555 HTTP/11" 200 20688
